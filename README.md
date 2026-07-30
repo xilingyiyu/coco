@@ -1,6 +1,8 @@
-# 小智智控台 (xiaozhi-esp32-server)
+# 小智智控台 (xiaozhi-esp32-server) 配置仓库
 
-为 [xiaozhi-esp32](https://github.com/xinnan-tech/xiaozhi-esp32-server) 开源硬件提供后端服务的全栈系统。ESP32 设备通过 WebSocket 连接服务端，实现语音交互（ASR → LLM → TTS）、设备管理和外部服务集成。
+[xiaozhi-esp32-server](https://github.com/xinnan-tech/xiaozhi-esp32-server) 是为 ESP32 开源硬件提供后端服务的全栈系统。设备通过 WebSocket 连接服务端，实现语音交互（ASR → LLM → TTS）、设备管理和外部服务集成。
+
+本仓库为 xiaozhi.xilingyiyu.cn 的部署配置与文档。
 
 ## 部署架构
 
@@ -11,13 +13,26 @@
 | xiaozhi-esp32-server-redis | 6379 | 缓存 |
 | xiaozhi-esp32-server-db | 3306 | 数据库 |
 
-## 功能
+## DNS 解析
 
-- 天气查询（中国气象局数据源）
-- 企业微信消息发送
-- 快递物流查询（快递100）
-- 在线点歌（QQ音乐 / 网易云）
-- 网络搜索 / 新闻获取
+域名通过 [阿里云 DNS](https://dns.console.aliyun.com) 解析：
+
+| 域名 | 类型 | 目标 |
+|------|------|------|
+| xiaozhi.xilingyiyu.cn | CNAME → xilingyiyu.cn | nginx 反代到 8002 |
+| video.xilingyiyu.cn | A → 106.55.151.24 | kvideo Next.js 服务 |
+
+## 外部集成
+
+| 服务 | 用途 | 文档 |
+|------|------|------|
+| [阿里云语音识别](https://help.aliyun.com/product/30412.html) | ASR 语音转文字 | AliyunStreamASR |
+| [DeepSeek](https://platform.deepseek.com/) | LLM 语义理解 | deepseek-v4-flash |
+| [硅基流动 SiliconFlow](https://siliconflow.cn/) | TTS 语音合成 | CosyVoice2-0.5B |
+| [中国气象局](https://www.cma.gov.cn) (via [apihz.cn](https://www.apihz.cn)) | 天气数据 | tqyb.php API |
+| [企业微信机器人](https://developer.work.weixin.qq.com/document/path/91770) | 群消息推送 | webhook 发送 |
+| [快递100](https://www.kuaidi100.com/openapi/) | 物流轨迹查询 | poll/query.do |
+| [妖狐 API](https://www.yaohud.cn) | QQ音乐/网易云搜索 | 音乐搜索下载 |
 
 ## 文档
 

@@ -34,7 +34,7 @@ OTA 接口端口 8003：
 |------|-----|
 | 描述 | 查询城市天气，不传参数自动显示叙永 |
 | 参数 | `location`（可选，城市名） |
-| 数据源 | apihz.cn → 中国气象局 |
+| 数据源 | [apihz.cn](https://www.apihz.cn) → [中国气象局](https://www.cma.gov.cn) |
 | Action | RESPONSE（直接播报，不走 LLM） |
 | 默认城市 | 叙永（四川） |
 
@@ -45,10 +45,9 @@ OTA 接口端口 8003：
 
 | 属性 | 值 |
 |------|-----|
-| 描述 | 通过企业微信机器人发送消息 |
+| 描述 | 通过[企业微信机器人](https://developer.work.weixin.qq.com/document/path/91770)发送消息 |
 | 参数 | `content`（消息内容） |
 | 配置 | `.wechat_webhook.json` 存 webhook URL |
-| webhook | `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=11f34500-634c-4d6b-b2e6-c6d71fca97b4` |
 
 ### 企业微信设置 `wechat_set_webhook()`
 
@@ -63,7 +62,7 @@ OTA 接口端口 8003：
 |------|-----|
 | 描述 | 查询快递物流信息 |
 | 参数 | `num`（单号，必填），`com`（快递公司编码，可选），`phone`（手机号后四位，可选） |
-| API | 快递100 poll/query.do |
+| API | [快递100 poll/query.do](https://www.kuaidi100.com/openapi/) |
 | 签名 | MD5(param + key + customer) → 32 位大写 |
 | 配置 | `.kuaidi_config.json` |
 | 轨迹 | 最多返回最近 3 条 |

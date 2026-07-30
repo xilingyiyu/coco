@@ -2,9 +2,9 @@
 
 ## 系统概述
 
-xiaozhi-esp32-server 是一个为 ESP32 智能硬件提供后端服务的全栈系统。设备通过 WebSocket 长连接与服务端通信，用户语音经过 ASR 识别 → LLM 语义理解 → Intent 函数调用 → TTS 语音合成的完整链路处理后，设备播放语音响应，同时可执行微信消息发送、快递查询、音乐播放、天气查询等实际操作。
+[xiaozhi-esp32-server](https://github.com/xinnan-tech/xiaozhi-esp32-server) 是一个为 ESP32 智能硬件提供后端服务的全栈系统。设备通过 WebSocket 长连接与服务端通信，用户语音经过 ASR 识别 → LLM 语义理解 → Intent 函数调用 → TTS 语音合成的完整链路处理后，设备播放语音响应，同时可执行微信消息发送、快递查询、音乐播放、天气查询等实际操作。
 
-系统以 Docker Compose 编排 4 个容器运行，由 nginx 提供域名反向代理。
+系统以 Docker Compose 编排 4 个容器运行，由 nginx 提供域名反向代理，域名通过 [阿里云 DNS](https://dns.console.aliyun.com) 解析。
 
 ## 技术栈
 
@@ -14,10 +14,10 @@ xiaozhi-esp32-server 是一个为 ESP32 智能硬件提供后端服务的全栈�
 - JavaScript（Web 前端）
 
 **AI 服务**
-- ASR：阿里云语音识别 (AliyunStreamASR)
-- LLM：DeepSeek v4-flash（OpenAI 兼容 API）
-- TTS：硅基流动 CosyVoice2-0.5B（SiliconFlow API，语音克隆）
-- VAD：SileroVAD（语音活动检测）
+- ASR：[阿里云语音识别 (AliyunStreamASR)](https://help.aliyun.com/product/30412.html)
+- LLM：[DeepSeek v4-flash](https://platform.deepseek.com/)（OpenAI 兼容 API）
+- TTS：[硅基流动 CosyVoice2-0.5B (SiliconFlow)](https://siliconflow.cn/)
+- VAD：[SileroVAD](https://github.com/snakers4/silero-vad)（语音活动检测）
 - 语音克隆音色：xiaozhi 定制音色
 
 **数据存储**
@@ -27,14 +27,14 @@ xiaozhi-esp32-server 是一个为 ESP32 智能硬件提供后端服务的全栈�
 **基础设施**
 - Docker + Docker Compose（容器编排）
 - nginx（反向代理）
-- 阿里云 ECS 2 核 2G（主服务器）
+- [阿里云 ECS](https://ecs.console.aliyun.com) 2 核 2G（主服务器）
 
 **外部 API**
-- 中国气象局数据（通过 apihz.cn tqyb.php）
-- 快递100（物流查询）
-- 企业微信机器人（群消息发送）
-- 妖狐 API（QQ音乐/网易云音乐搜索下载）
-- 腾讯云 DNS（域名解析）
+- [中国气象局数据](https://www.cma.gov.cn)（通过 [apihz.cn](https://www.apihz.cn) tqyb.php）
+- [快递100](https://www.kuaidi100.com)（物流查询）
+- [企业微信机器人](https://developer.work.weixin.qq.com/document/path/91770)（群消息发送）
+- [妖狐 API](https://www.yaohud.cn)（QQ音乐/网易云音乐搜索下载）
+- [阿里云 DNS](https://dns.console.aliyun.com)（域名解析）
 
 ## 部署架构
 
@@ -161,9 +161,9 @@ sequenceDiagram
 
 | 服务 | 凭据位置 | 存储方式 |
 |------|---------|---------|
-| DeepSeek | 主配置 `.config.yaml` | yaml 明文 |
-| 阿里云 ASR | 主配置 `.config.yaml` | yaml 明文 |
-| 硅基流动 TTS | 主配置 `.config.yaml` | yaml 明文 |
+| DeepSeek | 主配置 `.config.yaml` | yaml |
+| 阿里云 ASR | 主配置 `.config.yaml` | yaml |
+| 硅基流动 TTS | 主配置 `.config.yaml` | yaml |
 | apihz 天气 | `get_weather.py` 源码 | 代码常量 |
 | 快递100 | `.kuaidi_config.json` | 独立 JSON 文件 |
 | 企业微信 | `.wechat_webhook.json` | 独立 JSON 文件 |
@@ -176,6 +176,16 @@ sequenceDiagram
 | `./data/` | `/opt/xiaozhi-esp32-server/data/` | 配置文件、设备数据 |
 | `./models/SenseVoiceSmall/model.pt` | `/opt/xiaozhi-esp32-server/models/SenseVoiceSmall/model.pt` | 语音模型 |
 | `./uploadfile/` | `/uploadfile/` | 上传文件 |
+
+## DNS 解析
+
+所有域名通过 [阿里云 DNS](https://dns.console.aliyun.com) 解析：
+
+| 域名 | 记录类型 | 记录值 |
+|------|---------|--------|
+| xilingyiyu.cn | A | 47.108.153.232 |
+| xiaozhi.xilingyiyu.cn | CNAME | 指向 xilingyiyu.cn |
+| video.xilingyiyu.cn | A | 106.55.151.24 |
 
 ## 全部域名
 

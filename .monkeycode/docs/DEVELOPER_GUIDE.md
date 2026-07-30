@@ -2,7 +2,7 @@
 
 ## 项目目的
 
-xiaozhi-esp32-server 是 xiaozhi-esp32 开源硬件的后端服务系统，为智能终端设备提供语音交互、设备管理和外部服务集成能力。
+[xiaozhi-esp32-server](https://github.com/xinnan-tech/xiaozhi-esp32-server) 是 [xiaozhi-esp32](https://github.com/xinnan-tech/xiaozhi-esp32-server) 开源硬件的后端服务系统，为智能终端设备提供语音交互、设备管理和外部服务集成能力。
 
 **核心职责**:
 - 通过 WebSocket 管理 ESP32 设备连接
@@ -25,6 +25,9 @@ xiaozhi-esp32-server 是 xiaozhi-esp32 开源硬件的后端服务系统，为�
 ```bash
 # 克隆项目
 git clone https://github.com/xinnan-tech/xiaozhi-esp32-server.git
+
+# 或使用本配置仓库
+git clone https://github.com/xilingyiyu/coco.git
 cd xiaozhi-esp32-server
 
 # 启动全栈
