@@ -10,6 +10,183 @@
 - 执行意图函数（天气/快递/微信/点歌等）
 - 提供 Web 管理界面（智控台）
 
+## 快速部署（从零开始）
+
+以下是从空白服务器到完整可用的全流程：
+
+### 1. 前置准备
+
+- 阿里云 ECS 2C2G 一台（Ubuntu 22.04/24.04）
+- 域名已购买（如 `xilingyiyu.cn`）
+- SSH 登录服务器
+
+### 2. DNS 解析配置
+
+登录 [阿里云 DNS 控制台](https://dns.console.aliyun.com)，添加解析记录：
+
+| 主机记录 | 类型 | 记录值 |
+|---------|------|--------|
+| @ | A | 47.108.153.232 |
+| xiaozhi | CNAME | xilingyiyu.cn |
+
+等待 5-10 分钟生效。
+
+### 3. 服务器初始化
+
+```bash
+# 安装 Docker
+curl -fsSL https://get.docker.com | bash
+apt-get install -y docker-compose-plugin
+
+# 安装 nginx
+apt-get install -y nginx
+```
+
+### 4. 拉取并启动服务
+
+```bash
+# 克隆官方仓库
+git clone https://github.com/xinnan-tech/xiaozhi-esp32-server.git /root/xiaozhi-esp32-server
+cd /root/xiaozhi-esp32-server/main/xiaozhi-server
+
+# 创建数据目录（用于挂载配置）
+mkdir -p data uploadfile models/SenseVoiceSmall
+
+# 启动全栈
+docker compose -f docker-compose_all.yml up -d
+
+# 验证
+docker ps
+# 应看到 4 个容器: server, web, redis, mysql
+```
+
+### 5. 写入主配置
+
+创建 `./data/.config.yaml`：
+
+```yaml
+server:
+  websocket: ws://47.108.153.232:8000/xiaozhi/v1/
+
+selected_module:
+  ASR: AliyunStreamASR
+  LLM: OpenAILLM
+  TTS: CosyVoiceSiliconflow
+  VAD: SileroVAD
+  Intent: function_call
+  Memory: nomem
+
+ASR:
+  AliyunStreamASR:
+    type: aliyun_stream
+    appkey: <你的阿里云ASR appkey>
+    access_key_id: <AK>
+    access_key_secret: <SK>
+    output_dir: tmp/
+
+LLM:
+  OpenAILLM:
+    type: openai
+    api_key: <你的DeepSeek key>
+    base_url: https://api.deepseek.com
+    model_name: deepseek-v4-flash
+    max_tokens: 2000
+    temperature: 0.7
+
+TTS:
+  CosyVoiceSiliconflow:
+    type: siliconflow
+    model: FunAudioLLM/CosyVoice2-0.5B
+    voice: FunAudioLLM/CosyVoice2-0.5B:alex
+    private_voice: <你的语音克隆URI>
+    access_token: <你的硅基流动token>
+    output_dir: tmp/
+
+Intent:
+  function_call:
+    functions:
+      - get_weather
+      - wechat_send
+      - wechat_set_webhook
+      - kuaidi_bind
+      - kuaidi_query
+      - play_music
+      - web_search
+      - get_news_from_newsnow
+      - get_time
+      - change_role
+    type: function_call
+
+prompt: "我是一个叫小智的台湾女孩，说话机车，声音好听，习惯简短表达。"
+```
+
+### 6. 配置外部服务凭据
+
+```bash
+# 企业微信
+echo '{"webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=<YOUR_KEY>"}' > ./data/.wechat_webhook.json
+
+# 快递100
+echo '{"key": "<YOUR_KEY>", "customer": "<YOUR_CUSTOMER>"}' > ./data/.kuaidi_config.json
+
+# 妖狐音乐（可选）
+echo '{"yaohu_key": "<YOUR_KEY>"}' > ./data/.yaohu_config.json
+```
+
+### 7. 配置 nginx 反代
+
+```bash
+cat > /etc/nginx/sites-available/xiaozhi << 'EOF'
+server {
+    listen 80;
+    server_name xiaozhi.xilingyiyu.cn;
+    location / {
+        proxy_pass http://127.0.0.1:8002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+ln -sf /etc/nginx/sites-available/xiaozhi /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+```
+
+### 8. 更新自研插件
+
+从本仓库复制插件文件到主机 `plugins_func/functions/` 目录后更新到容器：
+
+```bash
+docker exec -i xiaozhi-esp32-server tee /opt/xiaozhi-esp32-server/plugins_func/functions/get_weather.py < get_weather.py
+docker exec -i xiaozhi-esp32-server tee /opt/xiaozhi-esp32-server/plugins_func/functions/wechat.py < wechat.py
+docker exec -i xiaozhi-esp32-server tee /opt/xiaozhi-esp32-server/plugins_func/functions/kuaidi.py < kuaidi.py
+docker exec -i xiaozhi-esp32-server tee /opt/xiaozhi-esp32-server/plugins_func/functions/play_music.py < play_music.py
+
+docker restart xiaozhi-esp32-server
+```
+
+### 9. 设备配网
+
+1. ESP32 设备上电
+2. 配网后自动连接 WebSocket `ws://47.108.153.232:8000/xiaozhi/v1/`
+3. 登录智控台 `https://xiaozhi.xilingyiyu.cn` 审批设备绑定
+
+### 10. 验证
+
+```bash
+# 检查容器全部 Running
+docker ps
+
+# 检查日志无错误
+docker logs --tail 50 xiaozhi-esp32-server
+
+# 对设备说"天气"，应该播报叙永天气
+# 说"发微信 测试"，企业微信群收到消息
+```
+
 ## 环境搭建
 
 ### 前置条件
